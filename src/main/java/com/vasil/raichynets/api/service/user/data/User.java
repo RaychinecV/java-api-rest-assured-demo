@@ -15,10 +15,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @lombok.Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class User {
-    private @JsonProperty("ad")
-    Ad ad;
     private @JsonProperty("data")
     Data data;
+    private @JsonProperty("support")
+    Support support;
     private @JsonProperty("createdAt")
     String createdAt;
     private @JsonProperty("name")

@@ -13,7 +13,7 @@ public class UserTest extends BaseTest {
 
     @Test(description = "Get user")
     public void getUser() {
-        User user = userService.getUser("1", 200);
+        User user = userService.getUser("2", 200);
         assertThat(user)
                 .as("Get user can not be null")
                 .isNotNull();
