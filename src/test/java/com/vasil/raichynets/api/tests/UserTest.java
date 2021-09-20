@@ -37,6 +37,7 @@ public class UserTest extends BaseTest {
         assertThat(usersPage).as("Get user can not be null").isNotNull();
         assertThat(usersPage.data().size() <= usersPage.perPage()).as("Users size and per_size field should be same or less!!!");
         assertThat(usersPage.page()).as("Expected page and actual page should be same.").isEqualTo(pageNumber);
+
     }
 
     @Test(description = "Get not exist user")
