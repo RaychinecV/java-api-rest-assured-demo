@@ -1,129 +1,205 @@
 package com.vasil.raichynets.api.service.user;
 
 import com.vasil.raichynets.api.service.BaseService;
-import com.vasil.raichynets.api.service.user.data.User;
+import com.vasil.raichynets.api.service.user.data.*;
 
+import static com.vasil.raichynets.api.constant.endpoints.Endpoints.*;
+import static com.vasil.raichynets.api.constant.scheme_paths.UserSchemePaths.*;
 import static io.restassured.RestAssured.given;
 import static java.util.Objects.requireNonNull;
-import static org.hamcrest.Matchers.equalTo;
 
+import io.qameta.allure.Step;
 import io.restassured.module.jsv.JsonSchemaValidator;
 import lombok.extern.log4j.Log4j2;
+import org.hamcrest.Matchers;
 
-import java.io.File;
-
-/**
- * @author Vasil Raichynets
- */
+import java.util.ArrayList;
+import java.util.List;
 
 @Log4j2
 public class UserService extends BaseService {
 
-    private final static String GET = "/users/{id}";
-    private final static String POST = "/users";
-    private final static String PUT = "/users/{id}";
-    private final static String PATCH = "/users/{id}";
-    private final static String DELETE = "/users/{id}";
+    @Step
+    public GetUser getUser(final int id) {
+        return this.getUser(id, 200, true);
+    }
 
-    public User getUser(final String id, final int expectedStatusCode) {
-        requireNonNull(id, "User id can not be null.");
+    @Step
+    public GetUser getUser(final int id, final int expectedStatusCode) {
+        return this.getUser(id, expectedStatusCode, true);
+    }
 
-        log.info("Try get user with ID <" + id + ">");
-        final User user =
+    @Step
+    public GetUser getUser(final int id, final int expectedStatusCode, final boolean isExist) {
+
+        log.info("Getting user with ID <{}>.", id);
+        final GetUser user =
                 given()
-                        .spec(getRequestSpec())
                         .pathParam("id", id)
-                .when()
-                        .get(GET)
-                .then()
-                        .spec(getResponseSpec(expectedStatusCode))
+
+                        .when()
+                        .get(USER_RESOURCE + USER_PATH_PARAMETER_ID)
+
+                        .then()
+                        .log().body()
                         .log().status()
+                        .statusCode(expectedStatusCode)
+                        .body(isExist ? JsonSchemaValidator.matchesJsonSchemaInClasspath(GET_USER.getPath()) : Matchers.is("{}"))
                         .extract()
                         .body()
-                        .as(User.class);
-        log.info("Have got user with ID <" + id + ">.");
+                        .as(GetUser.class);
+        log.info("User with id {} is found {}.", id, user);
 
         return user;
     }
 
-    public User createUser(final User newUser, final int expectedStatusCode) {
+    @Step
+    public UsersPage getUsersPage() {
+        return this.getUsersPage(0, 200);
+    }
+
+    @Step
+    public UsersPage getUsersPage(final int pageNumber) {
+        return this.getUsersPage(pageNumber, 200);
+    }
+
+    @Step
+    public boolean isUserPresentInUsersPages(final GetUser user) {
+
+        return this.getUsersPages().stream()
+                .anyMatch(page -> page.data()
+                        .stream().anyMatch(actualUser -> actualUser.equals(user.data())));
+    }
+
+    @Step
+    public List<UsersPage> getUsersPages() {
+        List<UsersPage> usersPages = new ArrayList<>();
+
+        int totalPages = this.getUsersPage().totalPages();
+        while (totalPages > 0) {
+            UsersPage usersPage = this.getUsersPage(totalPages);
+            usersPages.add(usersPage);
+            totalPages--;
+        }
+        return usersPages;
+    }
+
+    @Step
+    public UsersPage getUsersPage(final int pageNumber, final int expectedStatusCode) {
+
+        log.info("Getting users.");
+        final UsersPage usersPage =
+                given()
+                        .queryParam(USERS_QUERY_PARAMETER_PAGE, pageNumber)
+
+                        .when()
+                        .get(USER_RESOURCE)
+
+                        .then()
+                        .statusCode(expectedStatusCode)
+                        .log().body()
+                        .log().status()
+                        .body(JsonSchemaValidator.matchesJsonSchemaInClasspath(USERS_PAGE.getPath()))
+                        .extract()
+                        .body()
+                        .as(UsersPage.class);
+        log.info("Users is found {}.", usersPage);
+
+        return usersPage;
+    }
+
+    @Step
+    public CreateUser createUser(final User newUser) {
+        return this.createUser(newUser, 200);
+    }
+
+    @Step
+    public CreateUser createUser(final User newUser, final int expectedStatusCode) {
         requireNonNull(newUser, "User can not be null.");
 
-        log.info("Create new user " + newUser);
-        final User createdUser =
-            given()
-                    .spec(getRequestSpec())
-                    .body(newUser)
-            .when()
-                    .post(POST)
-            .then()
-                .spec(getResponseSpec(expectedStatusCode))
-                .assertThat()
-                .body(JsonSchemaValidator.matchesJsonSchemaInClasspath("createUser.json"))
-                .log().status()
-                .extract()
-                .body()
-                .as(User.class);
+        log.info("Creating new user {}.", newUser);
+        final CreateUser createdUser =
+                given()
+                        .body(newUser)
 
-        log.info("Created user " + createdUser);
+                        .when()
+                        .post(USER_RESOURCE)
+
+                        .then()
+                        .assertThat()
+                        .statusCode(expectedStatusCode)
+                        .body(JsonSchemaValidator.matchesJsonSchemaInClasspath(CREATE_USER.getPath()))
+                        .extract()
+                        .body()
+                        .as(CreateUser.class);
+        log.info("User is created {}.", createdUser);
+
         return createdUser;
     }
 
-    public User putUser(final String id, final User newUser, final int expectedStatusCode) {
-        requireNonNull(id, "User id can not be null.");
-        requireNonNull(newUser, "User can not be null.");
+    @Step
+    public UpdateUser putUser(final int id, final User user, final int expectedStatusCode) {
+        requireNonNull(user, "User can not be null.");
 
-        log.info("Update user by put " + newUser);
-        final User updatedUser =
+        log.info("Update user by put " + user);
+        final UpdateUser updatedUser =
                 given()
-                        .spec(getRequestSpec())
                         .pathParam("id", id)
-                        .body(newUser)
-                .when()
-                        .put(PUT)
-                .then()
-                        .spec(getResponseSpec(expectedStatusCode))
-                        .log().status()
+                        .body(user)
+
+                        .when()
+                        .put(USER_RESOURCE + USER_PATH_PARAMETER_ID)
+
+                        .then()
+                        .assertThat()
+                        .statusCode(expectedStatusCode)
+                        .body(JsonSchemaValidator.matchesJsonSchemaInClasspath(UPDATE_USER.getPath()))
                         .extract()
-                        .as(User.class);
-        log.info("User updated " + updatedUser);
+                        .body()
+                        .as(UpdateUser.class);
+        log.info("User is updated by put {}.", updatedUser);
+
         return updatedUser;
     }
 
-    public User patchUser(final String id, final User newUser, final int expectedStatusCode) {
-        requireNonNull(id, "User id can not be null.");
-        requireNonNull(newUser, "User can not be null.");
+    @Step
+    public UpdateUser patchUser(final int id, final User user, final int expectedStatusCode) {
+        requireNonNull(user, "User can not be null.");
 
-        log.info("Update user by patch " + newUser);
-        final User updatedUser =
+        log.info("Update user by patch " + user);
+        final UpdateUser updatedUser =
                 given()
-                        .spec(getRequestSpec())
                         .pathParam("id", id)
-                        .body(newUser)
-                .when()
-                        .patch(PATCH)
-                .then()
-                        .spec(getResponseSpec(expectedStatusCode))
-                        .log().status()
+                        .body(user)
+
+                        .when()
+                        .patch(USER_RESOURCE + USER_PATH_PARAMETER_ID)
+
+                        .then()
+                        .assertThat()
+                        .statusCode(expectedStatusCode)
+                        .body(JsonSchemaValidator.matchesJsonSchemaInClasspath(UPDATE_USER.getPath()))
                         .extract()
-                        .as(User.class);
-        log.info("User updated " + updatedUser);
+                        .body()
+                        .as(UpdateUser.class);
+        log.info("User is updated by patch {}.", updatedUser);
+
         return updatedUser;
     }
 
+    @Step
+    public void deleteUser(final int id, final int expectedStatusCode) {
 
-    public void deleteUser(final String id, final int expectedStatusCode) {
-        requireNonNull(id, "User id can not be null.");
+        log.info("Deleting user with id <{}>.", id);
+        given()
+                .pathParam("id", id)
 
-        log.info("Delete user with id <" + id + ">");
-
-                given()
-                        .spec(getRequestSpec())
-                        .pathParam("id", id)
                 .when()
-                        .delete(DELETE)
+                .delete(USER_RESOURCE + USER_PATH_PARAMETER_ID)
+
                 .then()
-                        .spec(getResponseSpec(expectedStatusCode))
-                        .log().status();
+                .assertThat()
+                .statusCode(expectedStatusCode)
+                .body(Matchers.is(""));
     }
 }

@@ -15,17 +15,17 @@ import org.testng.TestListenerAdapter;
 public class TestListener extends TestListenerAdapter {
     @Override
     public void onTestStart(ITestResult iTestResult) {
-        log.info(String.format("------- Starting test %s-------\n", iTestResult.getMethod().getMethodName()));
+        log.info("------- Starting test case <{}> -------\n", iTestResult.getMethod().getMethodName());
     }
 
     @Override
     public void onTestSuccess(ITestResult iTestResult) {
-        log.info(String.format("------- SUCCESS -- %s---------\n", iTestResult.getMethod().getMethodName()));
+        log.info("------- Case <{}> is SUCCESS ---------\n", iTestResult.getMethod().getMethodName());
     }
 
     @Override
     public void onTestFailure(ITestResult iTestResult) {
-        log.info(String.format("!!!!!!!!! FAILURE-- %s-------\n", iTestResult.getMethod().getMethodName()));
+        log.info("!!!!!!!!! Case <{}> is FAILED !!!!!!!!!\n", iTestResult.getMethod().getMethodName());
     }
 
     @Override

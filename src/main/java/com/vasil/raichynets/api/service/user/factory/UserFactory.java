@@ -3,6 +3,7 @@ package com.vasil.raichynets.api.service.user.factory;
 import java.util.Locale;
 
 import com.vasil.raichynets.api.service.Factory;
+import com.vasil.raichynets.api.service.user.data.CreateUser;
 import com.vasil.raichynets.api.service.user.data.User;
 
 import com.devskiller.jfairy.Fairy;

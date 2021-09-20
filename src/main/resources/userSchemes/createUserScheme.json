@@ -1,15 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "Create user response schema",
   "type": "object",
-  "examples": [
-    {
-      "name": "Vasia",
-      "job": "leader",
-      "id": "372",
-      "createdAt": "2021-09-05T14:00:07.820Z"
-    }
-  ],
   "properties": {
     "name": {
       "type": "string"
@@ -20,8 +11,14 @@
     "id": {
       "type": "string"
     },
-    "createdAt123": {
+    "createdAt": {
       "type": "string"
     }
-  }
+  },
+  "required": [
+    "name",
+    "job",
+    "id",
+    "createdAt"
+  ]
 }
